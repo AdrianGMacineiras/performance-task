@@ -21,10 +21,14 @@ public class SimilarProductsController {
 
 	@GetMapping("/{productId}/similar")
 	public ResponseEntity<List<ProductDetail>> getSimilarProducts(@PathVariable String productId) {
-		final List<ProductDetail> similarProducts = this.similarProductsService.getSimilarProducts(productId);
-		if (similarProducts == null) {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+		try {
+			final List<ProductDetail> similarProducts = this.similarProductsService.getSimilarProducts(productId);
+			if (similarProducts == null) {
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+			}
+			return ResponseEntity.ok(similarProducts);
+		} catch (final Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
 		}
-		return ResponseEntity.ok(similarProducts);
 	}
 }
