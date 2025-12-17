@@ -10,11 +10,9 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +22,7 @@ public class SimilarProductsServiceImpl implements SimilarProductsService {
 	private static final String BASE_URL = "http://localhost:3001";
 	private static final int MAX_PARALLEL = 20;
 	private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(200);
+	private static final Map<String, ProductDetail> productCache = new ConcurrentHashMap<>();
 
 	@Override
 	public List<ProductDetail> getSimilarProducts(String productId) {
@@ -45,11 +44,16 @@ public class SimilarProductsServiceImpl implements SimilarProductsService {
 
 		final List<CompletableFuture<ProductDetail>> futures = limitedIds.stream()
 				.map(id -> CompletableFuture.supplyAsync(() -> {
+					final ProductDetail cached = productCache.get(id);
+					if (cached != null) {
+						return cached;
+					}
 					final String detailUrl = BASE_URL + "/product/" + id;
 					try {
 						final ResponseEntity<ProductDetail> detailResponse = this.restTemplate.getForEntity(detailUrl,
 								ProductDetail.class);
 						if (detailResponse.getStatusCode().is2xxSuccessful() && detailResponse.getBody() != null) {
+							productCache.put(id, detailResponse.getBody());
 							return detailResponse.getBody();
 						}
 					} catch (final RestClientException e) {
