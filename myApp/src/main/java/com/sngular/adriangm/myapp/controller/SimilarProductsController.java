@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -21,7 +22,8 @@ public class SimilarProductsController implements DefaultApi {
 
 	@Override
 	@GetMapping("/{id}/similar")
-	public Mono<ResponseEntity<Flux<ProductDetailDTO>>> getProductSimilar(@PathVariable("id") String productId) {
+	public Mono<ResponseEntity<Flux<ProductDetailDTO>>> getProductSimilar(@PathVariable("id") String productId,
+																		  ServerWebExchange exchange) {
 		final Flux<ProductDetailDTO> dtoFlux = this.similarProductsService.getSimilarProducts(productId)
 				.map(this.productDetailMapper::toApiModel);
 		return Mono.just(ResponseEntity.ok(dtoFlux));

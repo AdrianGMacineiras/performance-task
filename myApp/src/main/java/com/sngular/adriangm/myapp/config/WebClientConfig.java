@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
+import reactor.netty.resources.ConnectionProvider;
 
 import java.time.Duration;
 
@@ -16,9 +17,15 @@ public class WebClientConfig {
 
 	@Bean
 	public WebClient webClient() {
-		final HttpClient httpClient = HttpClient.create().option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
+		final ConnectionProvider provider = ConnectionProvider.builder("custom-pool").maxConnections(500)
+				.maxIdleTime(Duration.ofSeconds(30)).maxLifeTime(Duration.ofMinutes(5))
+				.pendingAcquireTimeout(Duration.ofSeconds(5)).build();
+
+		final HttpClient httpClient = HttpClient.create(provider).option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 3000)
 				.responseTimeout(Duration.ofSeconds(5)).doOnConnected(conn -> conn
 						.addHandlerLast(new ReadTimeoutHandler(5)).addHandlerLast(new WriteTimeoutHandler(5)));
-		return WebClient.builder().clientConnector(new ReactorClientHttpConnector(httpClient)).build();
+
+		return WebClient.builder().baseUrl("http://localhost:3001")
+				.clientConnector(new ReactorClientHttpConnector(httpClient)).build();
 	}
 }

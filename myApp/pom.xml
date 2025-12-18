@@ -95,6 +95,12 @@
       <artifactId>resilience4j-circuitbreaker</artifactId>
       <version>2.2.0</version>
     </dependency>
+    <!-- Caffeine cache for in-memory caching with TTL and size limit -->
+    <dependency>
+      <groupId>com.github.ben-manes.caffeine</groupId>
+      <artifactId>caffeine</artifactId>
+      <version>3.1.8</version>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
