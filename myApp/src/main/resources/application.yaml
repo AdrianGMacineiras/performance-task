@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: similar-products-service
+  server:
+    port: 5000
+    compression:
+      enabled: true
+      mime-types: application/json
+      min-response-size: 1024
+
+product-service:
+  concurrency: 20
+  timeout: 1600ms
+  retry:
+    attempts: 2
+    initial-delay: 100ms
+    max-backoff: 1s
+    jitter: 0.2
+  external-api:
+    url: http://simulado:80

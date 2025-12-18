@@ -5,7 +5,7 @@
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
     <version>3.2.0</version>
-    <relativePath/> <!-- lookup parent from repository -->
+    <relativePath/> <!-- lookup parent from infraestructure -->
   </parent>
   <groupId>com.inditex.oscodeps</groupId>
   <artifactId>myApp</artifactId>
@@ -40,12 +40,96 @@
       <artifactId>httpclient5</artifactId>
       <version>5.2.1</version>
     </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-webflux</artifactId>
+        <version>3.5.7</version>
+    </dependency>
+    <!-- MapStruct for Java bean mapping -->
+    <dependency>
+      <groupId>org.mapstruct</groupId>
+      <artifactId>mapstruct</artifactId>
+      <version>1.5.5.Final</version>
+    </dependency>
+    <dependency>
+      <groupId>org.mapstruct</groupId>
+      <artifactId>mapstruct-processor</artifactId>
+      <version>1.5.5.Final</version>
+      <scope>provided</scope>
+    </dependency>
+    <!-- Validación javax para compatibilidad con OpenAPI Generator -->
+    <dependency>
+      <groupId>javax.validation</groupId>
+      <artifactId>validation-api</artifactId>
+      <version>2.0.1.Final</version>
+    </dependency>
+
+    <!-- Anotaciones javax (para @Generated) -->
+    <dependency>
+      <groupId>javax.annotation</groupId>
+      <artifactId>javax.annotation-api</artifactId>
+      <version>1.3.2</version>
+    </dependency>
+
+    <!-- Jackson nullable -->
+    <dependency>
+      <groupId>org.openapitools</groupId>
+      <artifactId>jackson-databind-nullable</artifactId>
+      <version>0.2.3</version>
+    </dependency>
+
+    <!-- Swagger / OpenAPI Annotations -->
+    <dependency>
+      <groupId>io.swagger.core.v3</groupId>
+      <artifactId>swagger-annotations</artifactId>
+      <version>2.2.9</version>
+    </dependency>
+    <!-- Resilience4j CircuitBreaker for reactive programming -->
+    <dependency>
+      <groupId>io.github.resilience4j</groupId>
+      <artifactId>resilience4j-reactor</artifactId>
+      <version>2.2.0</version>
+    </dependency>
+    <dependency>
+      <groupId>io.github.resilience4j</groupId>
+      <artifactId>resilience4j-circuitbreaker</artifactId>
+      <version>2.2.0</version>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+      <!-- OpenAPI Generator plugin for automatic model/controller generation -->
+      <plugin>
+        <groupId>org.openapitools</groupId>
+        <artifactId>openapi-generator-maven-plugin</artifactId>
+        <version>7.0.1</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <inputSpec>${project.basedir}/../similarProducts.yaml</inputSpec>
+              <generatorName>spring</generatorName>
+              <library>spring-boot</library>
+              <output>${project.build.directory}/generated-sources/openapi</output>
+              <modelPackage>com.sngular.adriangm.myapp.dto</modelPackage>
+              <apiPackage>com.sngular.adriangm.myapp.api.generated</apiPackage>
+              <modelNameSuffix>DTO</modelNameSuffix>
+              <configOptions>
+                <interfaceOnly>true</interfaceOnly>
+                <reactive>true</reactive>
+                <useTags>true</useTags>
+              </configOptions>
+              <generateApiTests>false</generateApiTests>
+              <generateModelTests>false</generateModelTests>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>

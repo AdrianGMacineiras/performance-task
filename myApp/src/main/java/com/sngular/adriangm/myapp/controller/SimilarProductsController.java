@@ -1,34 +1,29 @@
 package com.sngular.adriangm.myapp.controller;
 
-import com.sngular.adriangm.myapp.model.ProductDetail;
+import com.sngular.adriangm.myapp.api.generated.DefaultApi;
+import com.sngular.adriangm.myapp.controller.mapper.ProductDetailMapper;
+import com.sngular.adriangm.myapp.dto.ProductDetailDTO;
 import com.sngular.adriangm.myapp.service.SimilarProductsService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/product")
-public class SimilarProductsController {
+public class SimilarProductsController implements DefaultApi {
 
+	private final ProductDetailMapper productDetailMapper;
 	private final SimilarProductsService similarProductsService;
 
-	@GetMapping("/{productId}/similar")
-	public ResponseEntity<List<ProductDetail>> getSimilarProducts(@PathVariable String productId) {
-		try {
-			final List<ProductDetail> similarProducts = this.similarProductsService.getSimilarProducts(productId);
-			if (similarProducts == null) {
-				return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-			}
-			return ResponseEntity.ok(similarProducts);
-		} catch (final Exception e) {
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-		}
+	@Override
+	@GetMapping("/{id}/similar")
+	public Mono<ResponseEntity<Flux<ProductDetailDTO>>> getProductSimilar(@PathVariable("id") String productId) {
+		final Flux<ProductDetailDTO> dtoFlux = this.similarProductsService.getSimilarProducts(productId)
+				.map(this.productDetailMapper::toApiModel);
+		return Mono.just(ResponseEntity.ok(dtoFlux));
 	}
 }

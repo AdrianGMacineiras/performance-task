@@ -1,9 +1,8 @@
 package com.sngular.adriangm.myapp.service;
 
 import com.sngular.adriangm.myapp.model.ProductDetail;
-
-import java.util.List;
+import reactor.core.publisher.Flux;
 
 public interface SimilarProductsService {
-	List<ProductDetail> getSimilarProducts(String productId);
+	Flux<ProductDetail> getSimilarProducts(String productId);
 }
