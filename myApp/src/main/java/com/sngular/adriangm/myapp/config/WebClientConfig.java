@@ -17,13 +17,13 @@ public class WebClientConfig {
 
 	@Bean
 	public WebClient webClient() {
-		final ConnectionProvider provider = ConnectionProvider.builder("custom-pool").maxConnections(500)
+		final ConnectionProvider provider = ConnectionProvider.builder("custom-pool").maxConnections(1000)
 				.maxIdleTime(Duration.ofSeconds(30)).maxLifeTime(Duration.ofMinutes(5))
 				.pendingAcquireTimeout(Duration.ofSeconds(5)).build();
 
 		final HttpClient httpClient = HttpClient.create(provider).option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 3000)
-				.responseTimeout(Duration.ofSeconds(5)).doOnConnected(conn -> conn
-						.addHandlerLast(new ReadTimeoutHandler(5)).addHandlerLast(new WriteTimeoutHandler(5)));
+				.responseTimeout(Duration.ofSeconds(8)).doOnConnected(conn -> conn
+						.addHandlerLast(new ReadTimeoutHandler(8)).addHandlerLast(new WriteTimeoutHandler(8)));
 
 		return WebClient.builder().baseUrl("http://localhost:3001")
 				.clientConnector(new ReactorClientHttpConnector(httpClient)).build();

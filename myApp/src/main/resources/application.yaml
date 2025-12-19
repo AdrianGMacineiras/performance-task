@@ -9,12 +9,22 @@ spring:
       min-response-size: 1024
 
 product-service:
-  concurrency: 20
-  timeout: 1600ms
-  retry:
-    attempts: 2
-    initial-delay: 100ms
-    max-backoff: 1s
-    jitter: 0.2
+  base-url: http://localhost:3001
+  timeout: 8s
+  concurrency: 1000
+  circuit-breaker:
+    failure-rate-threshold: 50
+    wait-duration-in-open-state: 10s
+    sliding-window-size: 100
+    minimum-number-of-calls: 20
+    slow-call-rate-threshold: 50
+    slow-call-duration-threshold: 5s
+  cache:
+    maximum-size: 1000
+    expire-after-write: 30m
+    expire-after-access: 10m
+    record-stats: true
   external-api:
     url: http://simulado:80
+
+
