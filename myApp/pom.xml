@@ -7,7 +7,7 @@
     <version>3.2.0</version>
     <relativePath/> <!-- lookup parent from infraestructure -->
   </parent>
-  <groupId>com.inditex.oscodeps</groupId>
+  <groupId>com.sngular.adriangm</groupId>
   <artifactId>myApp</artifactId>
   <version>1.0-SNAPSHOT</version>
   <name>Archetype - myApp</name>
@@ -33,7 +33,6 @@
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
       <version>1.18.30</version>
-      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.httpcomponents.client5</groupId>
