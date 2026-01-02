@@ -10,22 +10,34 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.resources.ConnectionProvider;
 
-import java.time.Duration;
-
 @Configuration
 public class WebClientConfig {
 
+	private final ProductServiceProperties properties;
+
+	public WebClientConfig(ProductServiceProperties properties) {
+		this.properties = properties;
+	}
+
 	@Bean
 	public WebClient webClient() {
-		final ConnectionProvider provider = ConnectionProvider.builder("custom-pool").maxConnections(1000)
-				.maxIdleTime(Duration.ofSeconds(30)).maxLifeTime(Duration.ofMinutes(5))
-				.pendingAcquireTimeout(Duration.ofSeconds(5)).build();
+		final ConnectionProvider provider = ConnectionProvider.builder("custom-pool")
+				.maxConnections(this.properties.getWebclient().getMaxConnections())
+				.maxIdleTime(this.properties.getWebclient().getMaxIdleTime())
+				.maxLifeTime(this.properties.getWebclient().getMaxLifeTime())
+				.pendingAcquireTimeout(this.properties.getWebclient().getPendingAcquireTimeout()).build();
 
-		final HttpClient httpClient = HttpClient.create(provider).option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 3000)
-				.responseTimeout(Duration.ofSeconds(8)).doOnConnected(conn -> conn
-						.addHandlerLast(new ReadTimeoutHandler(8)).addHandlerLast(new WriteTimeoutHandler(8)));
+		final HttpClient httpClient = HttpClient.create(provider)
+				.option(ChannelOption.CONNECT_TIMEOUT_MILLIS,
+						(int) this.properties.getWebclient().getConnectionTimeout().toMillis())
+				.responseTimeout(this.properties.getWebclient().getResponseTimeout())
+				.doOnConnected(conn -> conn
+						.addHandlerLast(
+								new ReadTimeoutHandler((int) this.properties.getWebclient().getReadTimeout().getSeconds()))
+						.addHandlerLast(new WriteTimeoutHandler(
+								(int) this.properties.getWebclient().getWriteTimeout().getSeconds())));
 
-		return WebClient.builder().baseUrl("http://localhost:3001")
+		return WebClient.builder().baseUrl(this.properties.getWebclient().getBaseUrl())
 				.clientConnector(new ReactorClientHttpConnector(httpClient)).build();
 	}
 }

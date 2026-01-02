@@ -10,16 +10,23 @@ import org.springframework.web.client.RestTemplate;
 
 @Configuration
 public class RestTemplateConfig {
+
+	private final ProductServiceProperties properties;
+
+	public RestTemplateConfig(ProductServiceProperties properties) {
+		this.properties = properties;
+	}
+
 	@Bean
 	public RestTemplate restTemplate() {
 		final PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
-		connectionManager.setMaxTotal(200);
-		connectionManager.setDefaultMaxPerRoute(200);
+		connectionManager.setMaxTotal(this.properties.getRestTemplate().getMaxConnections());
+		connectionManager.setDefaultMaxPerRoute(this.properties.getRestTemplate().getMaxConnectionsPerRoute());
 
 		final CloseableHttpClient httpClient = HttpClients.custom().setConnectionManager(connectionManager).build();
 
 		final HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory(httpClient);
-		factory.setConnectTimeout(5000);
+		factory.setConnectTimeout((int) this.properties.getRestTemplate().getConnectTimeout().toMillis());
 		return new RestTemplate(factory);
 	}
 }

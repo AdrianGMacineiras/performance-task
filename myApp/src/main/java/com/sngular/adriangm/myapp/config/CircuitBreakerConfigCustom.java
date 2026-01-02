@@ -5,15 +5,26 @@ import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.time.Duration;
-
 @Configuration
 public class CircuitBreakerConfigCustom {
+
+	private final ProductServiceProperties properties;
+
+	public CircuitBreakerConfigCustom(ProductServiceProperties properties) {
+		this.properties = properties;
+	}
+
 	@Bean
 	public CircuitBreakerRegistry circuitBreakerRegistry() {
 		final CircuitBreakerConfig defaultConfig = CircuitBreakerConfig.ofDefaults();
-		final CircuitBreakerConfig customConfig = CircuitBreakerConfig.custom().failureRateThreshold(50)
-				.waitDurationInOpenState(Duration.ofSeconds(3)).slidingWindowSize(20).build();
+		final CircuitBreakerConfig customConfig = CircuitBreakerConfig.custom()
+				.failureRateThreshold(this.properties.getCircuitBreaker().getFailureRateThreshold())
+				.waitDurationInOpenState(this.properties.getCircuitBreaker().getWaitDurationInOpenState())
+				.slidingWindowSize(this.properties.getCircuitBreaker().getSlidingWindowSize())
+				.minimumNumberOfCalls(this.properties.getCircuitBreaker().getMinimumNumberOfCalls())
+				.slowCallRateThreshold(this.properties.getCircuitBreaker().getSlowCallRateThreshold())
+				.slowCallDurationThreshold(this.properties.getCircuitBreaker().getSlowCallDurationThreshold()).build();
+
 		final CircuitBreakerRegistry registry = CircuitBreakerRegistry.of(defaultConfig);
 		registry.circuitBreaker("productDetailCB", customConfig);
 		return registry;
