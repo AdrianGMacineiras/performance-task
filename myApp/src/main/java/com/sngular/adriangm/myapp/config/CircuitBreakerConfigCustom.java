@@ -26,7 +26,7 @@ public class CircuitBreakerConfigCustom {
 				.slowCallDurationThreshold(this.properties.getCircuitBreaker().getSlowCallDurationThreshold()).build();
 
 		final CircuitBreakerRegistry registry = CircuitBreakerRegistry.of(defaultConfig);
-		registry.circuitBreaker("productDetailCB", customConfig);
+		registry.circuitBreaker(this.properties.getCircuitBreaker().getName(), customConfig);
 		return registry;
 	}
 }

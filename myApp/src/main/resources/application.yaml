@@ -30,6 +30,7 @@ product-service:
     pending-acquire-timeout: 5s
     max-in-memory-size: 16MB
   circuit-breaker:
+    name: productDetailCB
     failure-rate-threshold: 50
     wait-duration-in-open-state: 10s
     sliding-window-size: 100
@@ -48,7 +49,7 @@ product-service:
 resilience4j:
   circuitbreaker:
     instances:
-      productDetailCB:
+      "${product-service.circuit-breaker.name}":
         failure-rate-threshold: ${product-service.circuit-breaker.failure-rate-threshold}
         wait-duration-in-open-state: ${product-service.circuit-breaker.wait-duration-in-open-state}
         sliding-window-size: ${product-service.circuit-breaker.sliding-window-size}

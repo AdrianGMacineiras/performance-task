@@ -63,6 +63,7 @@ public class ProductServiceProperties {
 	@Setter
 	@Getter
 	public static class CircuitBreaker {
+		private String name = "productDetailCB";
 		private int failureRateThreshold = 50;
 		private Duration waitDurationInOpenState = Duration.ofSeconds(10);
 		private int slidingWindowSize = 100;
