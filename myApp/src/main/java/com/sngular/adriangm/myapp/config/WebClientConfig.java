@@ -21,7 +21,8 @@ public class WebClientConfig {
 
 	@Bean
 	public WebClient webClient() {
-		final ConnectionProvider provider = ConnectionProvider.builder("custom-pool")
+		final ConnectionProvider provider = ConnectionProvider
+				.builder(this.properties.getWebclient().getConnectionPoolName())
 				.maxConnections(this.properties.getWebclient().getMaxConnections())
 				.maxIdleTime(this.properties.getWebclient().getMaxIdleTime())
 				.maxLifeTime(this.properties.getWebclient().getMaxLifeTime())
@@ -32,8 +33,8 @@ public class WebClientConfig {
 						(int) this.properties.getWebclient().getConnectionTimeout().toMillis())
 				.responseTimeout(this.properties.getWebclient().getResponseTimeout())
 				.doOnConnected(conn -> conn
-						.addHandlerLast(
-								new ReadTimeoutHandler((int) this.properties.getWebclient().getReadTimeout().getSeconds()))
+						.addHandlerLast(new ReadTimeoutHandler(
+								(int) this.properties.getWebclient().getReadTimeout().getSeconds()))
 						.addHandlerLast(new WriteTimeoutHandler(
 								(int) this.properties.getWebclient().getWriteTimeout().getSeconds())));
 

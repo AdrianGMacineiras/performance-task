@@ -1,5 +1,6 @@
 package com.sngular.adriangm.myapp.service.implement;
 
+import com.sngular.adriangm.myapp.config.ProductServiceProperties;
 import com.sngular.adriangm.myapp.exception.ProductNotFoundException;
 import com.sngular.adriangm.myapp.exception.SimilarProductsRetrievalException;
 import com.sngular.adriangm.myapp.infrastructure.ProductDetailRepository;
@@ -15,12 +16,15 @@ import reactor.core.publisher.Mono;
 public class SimilarProductsServiceImpl implements SimilarProductsService {
 
 	private final ProductDetailRepository productDetailRepository;
+	private final ProductServiceProperties properties;
 
 	@Override
 	public Flux<ProductDetail> getSimilarProducts(String productId) {
 		return this.productDetailRepository.getSimilarIds(productId)
+				.timeout(this.properties.getService().getSimilarProductsTimeout()) // Configurable timeout
 				.flatMap(id -> this.productDetailRepository.getProductDetail(id)
-						.onErrorResume(ProductNotFoundException.class, e -> Mono.empty()).switchIfEmpty(Mono.empty()))
+						.onErrorResume(ProductNotFoundException.class, e -> Mono.empty()).switchIfEmpty(Mono.empty()),
+						this.properties.getService().getConcurrencyLevel()) // Configurable concurrency
 				.onErrorMap(e -> new SimilarProductsRetrievalException(productId, e))
 				.onErrorResume(SimilarProductsRetrievalException.class, e -> Flux.empty());
 	}

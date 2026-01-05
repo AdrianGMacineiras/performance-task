@@ -24,7 +24,9 @@ public class CacheConfig {
 		final Caffeine<Object, Object> caffeineBuilder = Caffeine.newBuilder()
 				.maximumSize(this.properties.getCache().getMaximumSize())
 				.expireAfterWrite(this.properties.getCache().getExpireAfterWrite())
-				.expireAfterAccess(this.properties.getCache().getExpireAfterAccess()).executor(ForkJoinPool.commonPool());
+				.expireAfterAccess(this.properties.getCache().getExpireAfterAccess())
+				.refreshAfterWrite(this.properties.getCache().getRefreshAfterWrite())
+				.executor(ForkJoinPool.commonPool());
 
 		if (this.properties.getCache().isRecordStats()) {
 			caffeineBuilder.recordStats();
