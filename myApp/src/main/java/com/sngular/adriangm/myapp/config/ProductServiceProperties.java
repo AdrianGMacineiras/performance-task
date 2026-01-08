@@ -63,7 +63,6 @@ public class ProductServiceProperties {
 		private int maximumSize = 500;
 		private Duration expireAfterWrite = Duration.ofMinutes(15);
 		private Duration expireAfterAccess = Duration.ofMinutes(5);
-		private Duration refreshAfterWrite = Duration.ofMinutes(10);
 		private boolean recordStats = true;
 	}
 

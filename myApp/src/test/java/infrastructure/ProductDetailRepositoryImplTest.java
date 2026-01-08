@@ -1,6 +1,6 @@
 package infrastructure;
 
-import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
+import com.github.benmanes.caffeine.cache.Cache;
 import com.sngular.adriangm.myapp.config.ProductServiceProperties;
 import com.sngular.adriangm.myapp.infrastructure.implement.ProductDetailRepositoryImpl;
 import com.sngular.adriangm.myapp.model.ProductDetail;
@@ -11,24 +11,29 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class ProductDetailRepositoryImplTest {
 
 	@Mock
-	private WebClient webClient;
+	private RestTemplate restTemplate;
 	@Mock
 	private CircuitBreakerRegistry circuitBreakerRegistry;
 	@Mock
-	private AsyncLoadingCache<String, ProductDetail> productCache;
+	private Cache<String, ProductDetail> productCache;
+	@Mock
+	private Cache<String, List<String>> similarIdsCache;
 	@Mock
 	private ProductServiceProperties properties;
 	@Mock
@@ -37,7 +42,6 @@ class ProductDetailRepositoryImplTest {
 	private CircuitBreaker circuitBreaker;
 
 	private ProductDetailRepositoryImpl repository;
-	private ConcurrentMap<String, CompletableFuture<ProductDetail>> cacheMap;
 
 	@BeforeEach
 	void setUp() {
@@ -51,12 +55,8 @@ class ProductDetailRepositoryImplTest {
 		// Setup circuit breaker mocks
 		when(this.circuitBreakerRegistry.circuitBreaker("productDetailCB")).thenReturn(this.circuitBreaker);
 
-		// Setup cache mocks
-		this.cacheMap = new ConcurrentHashMap<>();
-		when(this.productCache.asMap()).thenReturn(this.cacheMap);
-
-		this.repository = new ProductDetailRepositoryImpl(this.webClient, this.circuitBreakerRegistry,
-				this.productCache, this.properties);
+		this.repository = new ProductDetailRepositoryImpl(this.restTemplate, this.circuitBreakerRegistry,
+				this.productCache, this.similarIdsCache, this.properties);
 	}
 
 	@Test
@@ -68,30 +68,158 @@ class ProductDetailRepositoryImplTest {
 	@Test
 	@DisplayName("Should clear cache on initialization")
 	void initCache_clearsCache() {
-		// Arrange
-		this.cacheMap.put("test", CompletableFuture.completedFuture(new ProductDetail()));
-
 		// Act
 		this.repository.initCache();
 
 		// Assert
-		verify(this.productCache).asMap();
-		assertTrue(this.cacheMap.isEmpty());
+		verify(this.productCache).invalidateAll();
+	}
+
+	// ===== GET SIMILAR IDS TESTS =====
+
+	@Test
+	@DisplayName("Should retrieve similar product IDs successfully")
+	void getSimilarIds_success() {
+		// Arrange
+		final String[] expectedIds = {"1", "2", "3"};
+		final List<String> expectedList = Arrays.asList(expectedIds);
+
+		// Mock cache to call the mapping function
+		when(this.similarIdsCache.get(eq("0"), any())).thenAnswer(invocation -> {
+			final Function<String, List<String>> mappingFunction = invocation.getArgument(1);
+			return mappingFunction.apply("0");
+		});
+
+		when(this.circuitBreaker.executeSupplier(any())).thenAnswer(invocation -> {
+			// Execute the actual supplier to simulate circuit breaker passing through
+			final var supplier = invocation.getArgument(0, java.util.function.Supplier.class);
+			return supplier.get();
+		});
+		when(this.restTemplate.getForObject("http://localhost:3001/product/0/similarids", String[].class))
+				.thenReturn(expectedIds);
+
+		// Act
+		final List<String> result = this.repository.getSimilarIds("0");
+
+		// Assert
+		assertNotNull(result);
+		assertEquals(expectedList, result);
+		verify(this.circuitBreaker).executeSupplier(any());
 	}
 
 	@Test
-	@DisplayName("Should handle cache operations correctly")
-	void cache_operations() {
+	@DisplayName("Should return empty list when no similar IDs found")
+	void getSimilarIds_emptyResult() {
 		// Arrange
-		assertTrue(this.cacheMap.isEmpty());
+		// Mock cache to call the mapping function
+		when(this.similarIdsCache.get(eq("0"), any())).thenAnswer(invocation -> {
+			final Function<String, List<String>> mappingFunction = invocation.getArgument(1);
+			return mappingFunction.apply("0");
+		});
 
-		// Act - Add something to cache map directly for testing
-		this.cacheMap.put("direct",
-				CompletableFuture.completedFuture(new ProductDetail("direct", "Direct Product", 10.0, true)));
+		when(this.circuitBreaker.executeSupplier(any())).thenAnswer(invocation -> {
+			// Execute the actual supplier to simulate circuit breaker passing through
+			final var supplier = invocation.getArgument(0, java.util.function.Supplier.class);
+			return supplier.get();
+		});
+		when(this.restTemplate.getForObject("http://localhost:3001/product/0/similarids", String[].class))
+				.thenReturn(null);
+
+		// Act
+		final List<String> result = this.repository.getSimilarIds("0");
 
 		// Assert
-		assertFalse(this.cacheMap.isEmpty());
-		assertTrue(this.cacheMap.containsKey("direct"));
-		assertEquals(1, this.cacheMap.size());
+		assertNotNull(result);
+		assertTrue(result.isEmpty());
+	}
+
+	@Test
+	@DisplayName("Should return empty list when getSimilarIds throws exception")
+	void getSimilarIds_exception() {
+		// Arrange
+		// Mock cache to call the mapping function
+		when(this.similarIdsCache.get(eq("0"), any())).thenAnswer(invocation -> {
+			final Function<String, List<String>> mappingFunction = invocation.getArgument(1);
+			return mappingFunction.apply("0");
+		});
+
+		when(this.circuitBreaker.executeSupplier(any())).thenThrow(new RuntimeException("Service error"));
+
+		// Act
+		final List<String> result = this.repository.getSimilarIds("0");
+
+		// Assert
+		assertNotNull(result);
+		assertTrue(result.isEmpty());
+	}
+
+	// ===== GET PRODUCT DETAIL TESTS =====
+
+	@Test
+	@DisplayName("Should retrieve product detail successfully")
+	void getProductDetail_success() {
+		// Arrange
+		final ProductDetail expected = new ProductDetail("1", "Product 1", 10.0, true);
+		when(this.productCache.get(eq("1"), any())).thenReturn(expected);
+
+		// Act
+		final ProductDetail result = this.repository.getProductDetail("1");
+
+		// Assert
+		assertNotNull(result);
+		assertEquals(expected, result);
+		verify(this.productCache).get(eq("1"), any());
+	}
+
+	@Test
+	@DisplayName("Should return null when product not found")
+	void getProductDetail_notFound() {
+		// Arrange
+		when(this.productCache.get(eq("999"), any())).thenReturn(null);
+
+		// Act
+		final ProductDetail result = this.repository.getProductDetail("999");
+
+		// Assert
+		assertNull(result);
+	}
+
+	@Test
+	@DisplayName("Should handle RestClientException gracefully")
+	void getProductDetail_restClientException() {
+		// Arrange
+		when(this.productCache.get(eq("1"), any())).thenAnswer(invocation -> {
+			final Function<String, ProductDetail> loader = invocation.getArgument(1);
+			return loader.apply("1"); // This will trigger the circuit breaker
+		});
+		when(this.circuitBreaker.executeSupplier(any())).thenThrow(new RestClientException("Service unavailable"));
+
+		// Act
+		final ProductDetail result = this.repository.getProductDetail("1");
+
+		// Assert
+		assertNull(result);
+	}
+
+	// ===== CIRCUIT BREAKER TESTS =====
+
+	@Test
+	@DisplayName("Should use circuit breaker for REST calls")
+	void circuitBreaker_integration() {
+		// Arrange
+		final ProductDetail expected = new ProductDetail("1", "Product 1", 10.0, true);
+		when(this.productCache.get(eq("1"), any())).thenAnswer(invocation -> {
+			final Function<String, ProductDetail> loader = invocation.getArgument(1);
+			return loader.apply("1");
+		});
+		when(this.circuitBreaker.executeSupplier(any())).thenReturn(expected);
+
+		// Act
+		final ProductDetail result = this.repository.getProductDetail("1");
+
+		// Assert
+		assertNotNull(result);
+		assertEquals(expected, result);
+		verify(this.circuitBreaker).executeSupplier(any());
 	}
 }

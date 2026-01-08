@@ -1,12 +1,29 @@
 spring:
   application:
     name: similar-products-service
-  server:
-    port: 5000
-    compression:
-      enabled: true
-      mime-types: application/json
-      min-response-size: 1024
+  task:
+    execution:
+      pool:
+        core-size: 12
+        max-size: 64
+        queue-capacity: 500
+        keep-alive: 30s
+      thread-name-prefix: async-task-
+  jpa:
+    open-in-view: false
+
+server:
+  port: 5000
+  compression:
+    enabled: true
+    mime-types: application/json
+    min-response-size: 1024
+  tomcat:
+    threads:
+      max: 300
+      min-spare: 50
+    max-connections: 10000
+    accept-count: 200
 
 product-service:
   base-url: http://localhost:3001
@@ -18,8 +35,8 @@ product-service:
   rest-template:
     connect-timeout: 2s
     read-timeout: 6s
-    max-connections: 100
-    max-connections-per-route: 50
+    max-connections: 200
+    max-connections-per-route: 100
   webclient:
     base-url: http://localhost:3001
     timeout: 8s
@@ -35,16 +52,16 @@ product-service:
     connection-pool-name: custom-pool
   circuit-breaker:
     name: productDetailCB
-    failure-rate-threshold: 60
-    wait-duration-in-open-state: 10s
-    sliding-window-size: 50
-    minimum-number-of-calls: 5
-    slow-call-rate-threshold: 50
-    slow-call-duration-threshold: 3s
+    failure-rate-threshold: 40
+    wait-duration-in-open-state: 6s
+    sliding-window-size: 120
+    minimum-number-of-calls: 20
+    slow-call-rate-threshold: 35
+    slow-call-duration-threshold: 1000ms
   cache:
-    maximum-size: 500
-    expire-after-write: 15m
-    expire-after-access: 5m
+    maximum-size: 3000
+    expire-after-write: 6m
+    expire-after-access: 90s
     record-stats: true
   external-api:
     url: http://simulado:80

@@ -44,10 +44,11 @@
       <artifactId>httpclient5</artifactId>
       <version>5.2.1</version>
     </dependency>
+    <!-- Servlet API for generated controllers -->
     <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-webflux</artifactId>
-        <version>3.5.7</version>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
+      <scope>provided</scope>
     </dependency>
     <!-- MapStruct for Java bean mapping -->
     <dependency>
@@ -88,12 +89,7 @@
       <artifactId>swagger-annotations</artifactId>
       <version>2.2.9</version>
     </dependency>
-    <!-- Resilience4j CircuitBreaker for reactive programming -->
-    <dependency>
-      <groupId>io.github.resilience4j</groupId>
-      <artifactId>resilience4j-reactor</artifactId>
-      <version>2.2.0</version>
-    </dependency>
+    <!-- Resilience4j CircuitBreaker for traditional programming -->
     <dependency>
       <groupId>io.github.resilience4j</groupId>
       <artifactId>resilience4j-circuitbreaker</artifactId>
@@ -104,11 +100,6 @@
       <groupId>com.github.ben-manes.caffeine</groupId>
       <artifactId>caffeine</artifactId>
       <version>3.1.8</version>
-    </dependency>
-    <dependency>
-      <groupId>io.projectreactor</groupId>
-      <artifactId>reactor-test</artifactId>
-      <scope>test</scope>
     </dependency>
   </dependencies>
   <build>
@@ -137,8 +128,9 @@
               <modelNameSuffix>DTO</modelNameSuffix>
               <configOptions>
                 <interfaceOnly>true</interfaceOnly>
-                <reactive>true</reactive>
+                <reactive>false</reactive>
                 <useTags>true</useTags>
+                <useJakartaEe>true</useJakartaEe>
               </configOptions>
               <generateApiTests>false</generateApiTests>
               <generateModelTests>false</generateModelTests>

@@ -1,10 +1,10 @@
 package com.sngular.adriangm.myapp.infrastructure;
 
 import com.sngular.adriangm.myapp.model.ProductDetail;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 public interface ProductDetailRepository {
-	Flux<String> getSimilarIds(String productId);
-	Mono<ProductDetail> getProductDetail(String productId);
+	List<String> getSimilarIds(String productId);
+	ProductDetail getProductDetail(String productId);
 }
